@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combined Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #8052ec, #d161ff);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .wrapper {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            top: 50%;
+            left: 50%;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(3, auto);
+            gap: 2vmin;
+        }
+
+        .box {
+            width: 22vmin;
+            height: 22vmin;
+            border: none;
+            border-radius: 8px;
+            background: #ffffff;
+            font-size: 12vmin;
+            color: #d161ff;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        #status {
+            padding: 20px;
+            font-size: 1em;
+            font-weight: 500;
+        }
+
+        button {
+            font-size: 1.3em;
+            padding: 1em;
+            border-radius: 8px;
+            background-color: #0a0027;
+            color: #ffffff;
+            border: none;
+            position: relative;
+            margin: 1.5em auto 0 auto;
+            display: block;
+        }
+
+        .popup {
+            background: linear-gradient(135deg, #8052ec, #d161ff);
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            display: flex;
+            z-index: 2;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 1em;
+            font-size: 12vmin;
+        }
+
+        #new-game {
+            font-size: 0.6em;
+            padding: 0.5em 1em;
+            background-color: #0a0027;
+            color: #ffffff;
+            border-radius: 0.2em;
+            border: none;
+        }
+
+        #message {
+            color: #ffffff;
+            text-align: center;
+            font-size: 1em;
+        }
+
+        .popup.hide {
+            display: none;
+        }
+
+        .score {
+            margin-top: 20px;
+            font-size: 1.5em;
+        }
+
+        .score span {
+            margin-right: 10px;
+        }
+
+        .win-effect {
+            background-color: #3cd60c;
+            animation: winAnimation ease-in-out 1s infinite;
+        }
+
+        @keyframes winAnimation {
+            0% {
+                background-color: #2c3a47;
+            }
+
+            100% {
+                background-color: #3cd60c;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <div data-index="0" class="box"></div>
+            <div data-index="1" class="box"></div>
+            <div data-index="2" class="box"></div>
+            <div data-index="3" class="box"></div>
+            <div data-index="4" class="box"></div>
+            <div data-index="5" class="box"></div>
+            <div data-index="6" class="box"></div>
+            <div data-index="7" class="box"></div>
+            <div data-index="8" class="box"></div>
+        </div>
+        <div id="status">Play Now</div>
+        <button id="restart">Restart</button>
+        <button id="reset-scores">Reset Scores</button>
+        <div class="score" id="score">
+            <span>X: <span id="scoreX">0</span></span>
+            <span>O: <span id="scoreO">0</span></span>
+        </div>
+    </div>
+
+    <div class="popup hide">
+        <p id="message">Sample Message</p>
+        <button id="new-game">New Game</button>
+    </div>
+
+    <script>
+        const boxs = document.querySelectorAll('.box');
+        const statusTxt = document.querySelector('#status');
+        const btnRestart = document.querySelector('#restart');
+        const btnResetScores = document.querySelector('#reset-scores');
+        const scoreXElement = document.querySelector('#scoreX');
+        const scoreOElement = document.querySelector('#scoreO');
+        const x = "X";
+        const o = "O";
+
+        const win = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ];
+
+        let options = ["", "", "", "", "", "", "", "", ""];
+        let currentPlayer = x;
+        let player = "X";
+        let running = false;
+        let scoreX = 0;
+        let scoreO = 0;
+        init();
+
+        function init() {
+            boxs.forEach(box => box.addEventListener('click', boxClick));
+            btnRestart.addEventListener('click', restartGame);
+            btnResetScores.addEventListener('click', resetScores);
+            document.getElementById('new-game').addEventListener('click', newGame);
+            statusTxt.textContent = `${player} Your Turn`;
+            running = true;
+        }
+
+        function boxClick() {
+            const index = this.dataset.index;
+            if (options[index] !== "" || !running) {
+                return;
+            }
+            updateBox(this, index);
+            checkWinner();
+        }
+
+        function updateBox(box, index) {
+            options[index] = player;
+            box.innerHTML = currentPlayer;
+        }
+
+        function changePlayer() {
+            player = (player === 'X') ? "O" : "X";
+            currentPlayer = (currentPlayer === x) ? o : x;
+            statusTxt.textContent = `${player} Your Turn`;
+        }
+
+        function checkWinner() {
+            let isWon = false;
+            for (let i = 0; i < win.length; i++) {
+                const condition = win[i];
+                const box1 = options[condition[0]];
+                const box2 = options[condition[1]];
+                const box3 = options[condition[2]];
+                if (box1 === "" || box2 === "" || box3 === "") {
+                    continue;
+                }
+                if (box1 === box2 && box2 === box3) {
+                    isWon = true;
+                    boxs[condition[0]].classList.add('win', 'win-effect');
+                    boxs[condition[1]].classList.add('win', 'win-effect');
+                    boxs[condition[2]].classList.add('win', 'win-effect');
+                    updateScore();
+                    updateRestartButton();
+                }
+            }
+            if (isWon) {
+                statusTxt.textContent = `${player} Won..`;
+                running = false;
+            } else if (!options.includes("")) {
+                statusTxt.textContent = "Game Draw..!";
+                running = false;
+            } else {
+                changePlayer();
+            }
+        }
+
+        function updateScore() {
+            if (player === 'X') {
+                scoreX++;
+                scoreXElement.textContent = scoreX;
+            } else {
+                scoreO++;
+                scoreOElement.textContent = scoreO;
+            }
+        }
+
+        function updateRestartButton() {
+            btnRestart.textContent = `${player} Win! Restart`;
+            btnRestart.style.backgroundColor = (player === 'X') ? '#d161ff' : '#8052ec';
+            btnRestart.style.color = 'white';
+            btnRestart.addEventListener('click', restartGame);
+        }
+
+        function restartGame() {
+            options = ["", "", "", "", "", "", "", "", ""];
+            currentPlayer = x;
+            player = "X";
+            running = true;
+            statusTxt.textContent = `${player} Your Turn`;
+
+            boxs.forEach(box => {
+                box.innerHTML = "";
+                box.classList.remove('win', 'win-effect');
+            });
+
+            btnRestart.textContent = 'Restart';
+            btnRestart.style.backgroundColor = '#0a0027';
+            btnRestart.style.color = 'white';
+            btnRestart.removeEventListener('click', restartGame);
+        }
+
+        function resetScores() {
+            scoreX = 0;
+            scoreO = 0;
+            scoreXElement.textContent = scoreX;
+            scoreOElement.textContent = scoreO;
+        }
+
+        function newGame() {
+            restartGame();
+            resetScores();
+        }
+    </script>
+</body>
+
+</html>
